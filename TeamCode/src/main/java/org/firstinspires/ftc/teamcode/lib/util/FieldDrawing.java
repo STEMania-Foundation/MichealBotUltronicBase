@@ -4,15 +4,18 @@ import com.bylazar.field.FieldManager;
 import com.bylazar.field.PanelsField;
 import com.bylazar.field.Style;
 import com.pedropathing.follower.Follower;
-import com.pedropathing.geometry.Pose;
-import com.pedropathing.math.Vector;
+import com.pedropathing.math.Pose;
 import com.pedropathing.paths.Path;
-import com.pedropathing.paths.PathChain;
-import com.pedropathing.util.PoseHistory;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class FieldDrawing {
-    public static final double ROBOT_RADIUS = 18/2; // woah
+    public static final double ROBOT_RADIUS = 18.0 / 2.0;
     private static final FieldManager panelsField = PanelsField.INSTANCE.getField();
+
+    private static final int MAX_HISTORY = 100;
+    private static final List<Pose> poseHistory = new ArrayList<>();
 
     private static final Style robotLook = new Style(
             "", "#3F51B5", 0.1
@@ -32,13 +35,21 @@ public class FieldDrawing {
      * @param follower Pedro Follower instance.
      */
     public static void drawDebug(Follower follower) {
-        if (follower.getCurrentPath() != null) {
-            drawPath(follower.getCurrentPath(), robotLook);
-            Pose closestPoint = follower.getPointFromPath(follower.getCurrentPath().getClosestPointTValue());
-            drawRobot(new Pose(closestPoint.getX(), closestPoint.getY(), follower.getCurrentPath().getHeadingGoal(follower.getCurrentPath().getClosestPointTValue())), robotLook);
+        if (follower == null) return;
+
+        if (follower.currentPath() != null) {
+            drawPath(follower.currentPath(), robotLook);
+
+            Pose targetPose = follower.closestPose();
+            if (targetPose != null) {
+                drawRobot(targetPose, robotLook);
+            }
         }
-        drawPoseHistory(follower.getPoseHistory(), historyLook);
-        drawRobot(follower.getPose(), historyLook);
+
+        Pose currentPose = follower.pose();
+        recordPose(currentPose);
+        drawPoseHistory(historyLook);
+        drawRobot(currentPose, historyLook);
 
         sendPacket();
     }
@@ -51,22 +62,18 @@ public class FieldDrawing {
      * @param style the parameters used to draw the robot with
      */
     public static void drawRobot(Pose pose, Style style) {
-        if (pose == null || Double.isNaN(pose.getX()) || Double.isNaN(pose.getY()) || Double.isNaN(pose.getHeading())) {
+        if (pose == null || Double.isNaN(pose.x()) || Double.isNaN(pose.y()) || Double.isNaN(pose.heading())) {
             return;
         }
 
         panelsField.setStyle(style);
-        panelsField.moveCursor(pose.getX(), pose.getY());
+        panelsField.moveCursor(pose.x(), pose.y());
         panelsField.circle(ROBOT_RADIUS);
 
-        Vector v = pose.getHeadingAsUnitVector();
-        v.setMagnitude(v.getMagnitude() * ROBOT_RADIUS);
-        double x1 = pose.getX() + v.getXComponent() / 2, y1 = pose.getY() + v.getYComponent() / 2;
-        double x2 = pose.getX() + v.getXComponent(), y2 = pose.getY() + v.getYComponent();
-
-        panelsField.setStyle(style);
-        panelsField.moveCursor(x1, y1);
-        panelsField.line(x2, y2);
+        double cos = Math.cos(pose.heading()) * ROBOT_RADIUS;
+        double sin = Math.sin(pose.heading()) * ROBOT_RADIUS;
+        panelsField.moveCursor(pose.x() + cos / 2.0, pose.y() + sin / 2.0);
+        panelsField.line(pose.x() + cos, pose.y() + sin);
     }
 
     /**
@@ -85,58 +92,53 @@ public class FieldDrawing {
      * @param style the parameters used to draw the Path with
      */
     public static void drawPath(Path path, Style style) {
-        double[][] points = path.getPanelsDrawingPoints();
+        if (path == null) return;
 
-        for (int i = 0; i < points[0].length; i++) {
-            for (int j = 0; j < points.length; j++) {
-                if (Double.isNaN(points[j][i])) {
-                    points[j][i] = 0;
-                }
+        panelsField.setStyle(style);
+        Pose start = path.get(0.0);
+        panelsField.moveCursor(start.x(), start.y());
+
+        int resolution = 25;
+        for (int i = 1; i <= resolution; i++) {
+            double t = (double) i / resolution;
+            Pose p = path.get(t);
+            if (!Double.isNaN(p.x()) && !Double.isNaN(p.y())) {
+                panelsField.line(p.x(), p.y());
             }
         }
-
-        panelsField.setStyle(style);
-        panelsField.moveCursor(points[0][0], points[0][1]);
-        panelsField.line(points[1][0], points[1][1]);
     }
 
-    /**
-     * This draws all the Paths in a PathChain with a
-     * specified look.
-     *
-     * @param pathChain the PathChain to draw
-     * @param style     the parameters used to draw the PathChain with
-     */
-    public static void drawPath(PathChain pathChain, Style style) {
-        for (int i = 0; i < pathChain.size(); i++) {
-            drawPath(pathChain.getPath(i), style);
+    private static void recordPose(Pose pose) {
+        if (pose == null) return;
+        poseHistory.add(pose);
+        if (poseHistory.size() > MAX_HISTORY) {
+            poseHistory.remove(0);
         }
     }
 
     /**
      * This draws the pose history of the robot.
      *
-     * @param poseTracker the PoseHistory to get the pose history from
-     * @param style       the parameters used to draw the pose history with
+     * @param style the parameters used to draw the pose history with
      */
-    public static void drawPoseHistory(PoseHistory poseTracker, Style style) {
+    public static void drawPoseHistory(Style style) {
+        if (poseHistory.size() < 2) return;
+
         panelsField.setStyle(style);
+        Pose first = poseHistory.get(0);
+        panelsField.moveCursor(first.x(), first.y());
 
-        int size = poseTracker.getXPositionsArray().length;
-        for (int i = 0; i < size - 1; i++) {
-
-            panelsField.moveCursor(poseTracker.getXPositionsArray()[i], poseTracker.getYPositionsArray()[i]);
-            panelsField.line(poseTracker.getXPositionsArray()[i + 1], poseTracker.getYPositionsArray()[i + 1]);
+        for (int i = 1; i < poseHistory.size(); i++) {
+            Pose p = poseHistory.get(i);
+            panelsField.line(p.x(), p.y());
         }
     }
 
     /**
-     * This draws the pose history of the robot.
-     *
-     * @param poseTracker the PoseHistory to get the pose history from
+     * Clears the recorded pose history trail.
      */
-    public static void drawPoseHistory(PoseHistory poseTracker) {
-        drawPoseHistory(poseTracker, historyLook);
+    public static void clearHistory() {
+        poseHistory.clear();
     }
 
     /**

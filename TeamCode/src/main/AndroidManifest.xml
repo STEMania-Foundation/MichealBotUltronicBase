@@ -6,22 +6,6 @@
 
 <!-- The package name here determines the package for your R class and your BuildConfig class -->
 <manifest
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools">
-    <application>
+    xmlns:android="http://schemas.android.com/apk/res/android">
 
-        <!-- RunOnBoot only exists to auto-launch the Robot Controller on a Control Hub.
-             On a phone RC there is nothing for it to launch, so it falls through to
-             noteAndroidBoardPresenceAndExitIfNoRC(), which calls System.exit(0).
-
-             Android redelivers the pending BOOT_COMPLETED broadcast into whatever process
-             next hosts the app, which is the same process as the foreground activity. The
-             receiver then exits that process, the activity manager restarts it, the
-             broadcast is redelivered, and the app never finishes starting. Removing the
-             receiver costs nothing on a phone and breaks the loop. -->
-        <receiver
-            android:name="org.firstinspires.ftc.ftccommon.internal.RunOnBoot"
-            tools:node="remove" />
-
-    </application>
 </manifest>

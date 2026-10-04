@@ -1,11 +1,7 @@
 package org.firstinspires.ftc.teamcode.lib.util;
 
-import com.acmerobotics.dashboard.config.Config;
-import com.outoftheboxrobotics.photoncore.Photon;
 import com.qualcomm.robotcore.hardware.AnalogInput;
 
-@Config
-@Photon
 public class ABSEncoder {
     public static double DEFAULT_RANGE = 3.3;
     public static boolean VALUE_REJECTION = false;

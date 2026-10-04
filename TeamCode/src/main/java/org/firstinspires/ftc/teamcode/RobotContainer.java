@@ -10,22 +10,32 @@ import org.firstinspires.ftc.teamcode.commands.TuneablePose;
 import org.firstinspires.ftc.teamcode.commands.auto.closeAutos;
 import org.firstinspires.ftc.teamcode.lib.util.KTelemetry;
 import org.firstinspires.ftc.teamcode.lib.wpilib.CommandGamepad;
+import org.firstinspires.ftc.teamcode.lib.wpilib.SlewRateLimiter;
 import org.firstinspires.ftc.teamcode.opmodes.OpModeConstants;
 import org.firstinspires.ftc.teamcode.subsystems.drive.Drive;
+import org.firstinspires.ftc.teamcode.subsystems.flywheel.Flywheel;
+import org.firstinspires.ftc.teamcode.subsystems.flywheel.FlywheelConstants;
 import org.firstinspires.ftc.teamcode.subsystems.intake.Intake;
+import org.firstinspires.ftc.teamcode.subsystems.transfer.Transfer;
 
 
 import java.util.Iterator;
 import java.util.function.DoubleSupplier;
 
+import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.util.function.BooleanConsumer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+
 
 public class RobotContainer {
     private final KTelemetry telemetry;
     private final Drive drive;
 
+
     private final Intake intake;
+    private final Transfer transfer;
+    private final Flywheel flywheel;
 
     private final CommandGamepad driverController;
 
@@ -34,6 +44,13 @@ public class RobotContainer {
     private boolean telemetryActive = true;
 
     public static DoubleSupplier voltage;
+
+    // how often to read the battery
+    private static final double VOLTAGE_PERIOD_MS = 100.0;
+
+    private final VoltageSensor voltageSensor;
+    private double cachedVoltage = 12.0;
+    private double lastVoltageReadMs = Double.NEGATIVE_INFINITY;
 
 
 
@@ -46,19 +63,16 @@ public class RobotContainer {
         this.telemetry = telemetry;
 
         drive = new Drive(hwMap, telemetry);
+
         intake = new Intake(hwMap, telemetry);
+        transfer = new Transfer(hwMap, telemetry);
+        flywheel = new Flywheel(hwMap, telemetry);
 
         driverController = new CommandGamepad(gamepad1);
 
-        voltage = () ->{
-            Iterator<VoltageSensor> sensors = hwMap.voltageSensor.iterator();
-            if (sensors.hasNext()) {
-                return sensors.next().getVoltage();
-            }
-            else {
-                return 12.0;
-            }
-        };
+        Iterator<VoltageSensor> sensors = hwMap.voltageSensor.iterator();
+        voltageSensor = sensors.hasNext() ? sensors.next() : null;
+        voltage = this::readVoltage;
 
         // This needs to be before all the default commands lmao
         this.isRed = red;
@@ -74,11 +88,25 @@ public class RobotContainer {
 
     public void periodic() {
         telemetry.addData("Telemetry Active", telemetryActive);
-
+        telemetry.addData("Battery Voltage", readVoltage());
+    }
+    private double readVoltage() {
+        if (voltageSensor == null) {
+            return 12.0;
+        }
+        double now = System.currentTimeMillis();
+        if (now - lastVoltageReadMs >= VOLTAGE_PERIOD_MS) {
+            cachedVoltage = voltageSensor.getVoltage();
+            lastVoltageReadMs = now;
+        }
+        return cachedVoltage;
     }
 
 
     public void setDefaultCommands(){
+        intake.setDefaultCommand(Commands.run(() -> intake.setPower(0.0), intake));
+        transfer.setDefaultCommand(Commands.run(() -> transfer.setPower(0.0), transfer));
+
         if (isRed) {
             drive.setDefaultCommand(
                     DriveCommands.drive(drive,
@@ -86,7 +114,7 @@ public class RobotContainer {
                             () -> (driverController.getLeftX()*-1),
                             () -> (-(driverController.getRightX())*0.9),
                             //() -> ((-(driverController.getRightX())/voltage.getAsDouble()*12.6)*0.9),
-                            () -> false
+                            () -> true
                     )
             );
         } else {
@@ -96,7 +124,7 @@ public class RobotContainer {
                             () -> (driverController.getLeftX()*1),
                             () -> (-(driverController.getRightX())*0.9),
                             //() -> ((-(driverController.getRightX())/voltage.getAsDouble()*12.6)*0.9),
-                            () -> false
+                            () -> true
                     )
             );
         }
@@ -113,7 +141,11 @@ public class RobotContainer {
                         ()->isRed)
         );
 
+        driverController.rightBumper().whileTrue(Commands.run(() -> intake.setPower(1.0), intake));
+        driverController.leftBumper().whileTrue(Commands.run(() -> transfer.setPower(1.0), transfer));
 
+        driverController.a().onTrue(flywheel.setTarget(() -> FlywheelConstants.shootVelocity));
+        driverController.b().onTrue(flywheel.setTarget(() -> 0.0));
     }
 
     public Command getAutoCommand(OpModeConstants auto) {

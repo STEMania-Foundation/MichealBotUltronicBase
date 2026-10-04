@@ -1,6 +1,8 @@
 package org.firstinspires.ftc.teamcode.commands;
 
-import com.pedropathing.geometry.Pose;
+//import com.pedropathing.
+
+import com.pedropathing.math.Pose;
 
 public class TuneablePose {
     public double x;
@@ -20,10 +22,7 @@ public class TuneablePose {
 
     public Pose getCorrectPose(boolean red)
     {
-        if(red){
-            return new Pose(x, y, Math.toRadians(heading)).mirror();
-        }
-        return new Pose(x, y, Math.toRadians(heading));
+        return red ? getRedPose() : getPose();
     }
 
 

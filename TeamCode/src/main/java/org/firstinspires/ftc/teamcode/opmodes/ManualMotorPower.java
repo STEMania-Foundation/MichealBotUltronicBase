@@ -3,10 +3,8 @@ package org.firstinspires.ftc.teamcode.opmodes;
 import com.bylazar.configurables.annotations.Configurable;
 import com.bylazar.telemetry.PanelsTelemetry;
 import com.bylazar.telemetry.TelemetryManager;
-import com.outoftheboxrobotics.photoncore.Photon;
-import com.outoftheboxrobotics.photoncore.hardware.motor.PhotonDcMotor;
-import com.outoftheboxrobotics.photoncore.hardware.motor.PhotonDcMotor;
 import com.qualcomm.hardware.lynx.LynxModule;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
@@ -15,15 +13,14 @@ import java.util.List;
 
 @Configurable
 @TeleOp(name="Manual Motor Power", group = "testing")
-@Photon
 @Disabled
 public class ManualMotorPower extends LinearOpMode {
 
     public static double br, bl, fl, fr;
-    private PhotonDcMotor backRight;
-    private PhotonDcMotor backLeft;
-    private PhotonDcMotor frontRight;
-    private PhotonDcMotor frontLeft;
+    private DcMotorEx backRight;
+    private DcMotorEx backLeft;
+    private DcMotorEx frontRight;
+    private DcMotorEx frontLeft;
 
     public List<LynxModule> allHubs;
     private double loopTime = 0.0;
@@ -38,10 +35,11 @@ public class ManualMotorPower extends LinearOpMode {
             hub.setBulkCachingMode(LynxModule.BulkCachingMode.MANUAL);
         }
 
-        backRight = (PhotonDcMotor) hardwareMap.dcMotor.get("br");
-        backLeft = (PhotonDcMotor) hardwareMap.dcMotor.get("bl");
-        frontLeft = (PhotonDcMotor) hardwareMap.dcMotor.get("fl");
-        frontRight = (PhotonDcMotor) hardwareMap.dcMotor.get("fr");
+        // Names match pedro/Constants.java MecanumConfig; the hub config is case-sensitive.
+        backRight = hardwareMap.get(DcMotorEx.class, "BR");
+        backLeft = hardwareMap.get(DcMotorEx.class, "BL");
+        frontLeft = hardwareMap.get(DcMotorEx.class, "FL");
+        frontRight = hardwareMap.get(DcMotorEx.class, "FR");
 
         waitForStart();
 

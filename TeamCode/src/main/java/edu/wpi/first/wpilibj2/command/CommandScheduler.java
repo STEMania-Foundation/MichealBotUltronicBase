@@ -8,8 +8,6 @@ import static edu.wpi.first.util.ErrorMessages.requireNonNullParam;
 
 import com.qualcomm.robotcore.util.RobotLog;
 
-import org.firstinspires.ftc.teamcode.lib.ftclib.opmode.Robot;
-
 import edu.wpi.first.wpilibj.event.EventLoop;
 import edu.wpi.first.wpilibj2.command.Command.InterruptionBehavior;
 import java.io.PrintWriter;
@@ -74,6 +72,20 @@ public final class CommandScheduler implements AutoCloseable {
   private EventLoop m_activeButtonLoop = m_defaultButtonLoop;
 
   private boolean m_disabled;
+
+  /**
+   * Whether the robot is enabled, owned by this scheduler instance.
+   *
+   * <p>This used to read {@code Robot.isDisabled()}, a non-volatile process-wide static. Any opmode
+   * that had ever run could write it - including a dead one whose stop() fired late - and a
+   * non-volatile static shared across threads can be read stale, so schedule() could see "disabled"
+   * in the same loop pass that telemetry reported "enabled". Every command on the robot, buttons
+   * and default commands alike, was refused at that gate with nothing thrown to show for it.
+   *
+   * <p>As an instance field it cannot be reached by anything that outlives the opmode, and volatile
+   * removes the visibility hazard.
+   */
+  private volatile boolean m_robotEnabled = false;
 
   // Lists of user-supplied actions to be executed on scheduling events for every command.
   private final List<Consumer<Command>> m_initActions = new ArrayList<>();
@@ -194,7 +206,7 @@ public final class CommandScheduler implements AutoCloseable {
     // run when disabled, or the command is already scheduled.
     if (m_disabled
         || isScheduled(command)
-        || Robot.isDisabled() && !command.runsWhenDisabled()) {
+        || !m_robotEnabled && !command.runsWhenDisabled()) {
       return;
     }
 
@@ -271,7 +283,7 @@ public final class CommandScheduler implements AutoCloseable {
 //    m_watchdog.addEpoch("buttons.run()");
 
     m_inRunLoop = true;
-    boolean isDisabled = Robot.isDisabled();
+    boolean isDisabled = !m_robotEnabled;
     // Run scheduled commands, remove finished commands.
     for (Iterator<Command> iterator = m_scheduledCommands.iterator(); iterator.hasNext(); ) {
       Command command = iterator.next();
@@ -531,6 +543,16 @@ public final class CommandScheduler implements AutoCloseable {
    */
   public Command requiring(Subsystem subsystem) {
     return m_requirements.get(subsystem);
+  }
+
+  /**
+   * Sets whether the robot is enabled for command scheduling. Driven by the opmode lifecycle:
+   * false in init(), true from start() and loop().
+   *
+   * @param enabled whether commands are allowed to schedule
+   */
+  public void setRobotEnabled(boolean enabled) {
+    m_robotEnabled = enabled;
   }
 
   /** Disables the command scheduler. */

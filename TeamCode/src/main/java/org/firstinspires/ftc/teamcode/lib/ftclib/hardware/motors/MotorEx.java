@@ -76,6 +76,11 @@ public class MotorEx extends Motor {
         return motorEx.getVelocity();
     }
 
+//    public double getRpm() {
+//        return motorEx.getVelocity() ;
+//    }
+
+
     /**
      * @return the acceleration of the motor in ticks per second squared
      */

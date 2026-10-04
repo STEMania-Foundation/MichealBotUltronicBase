@@ -1,14 +1,10 @@
 package org.firstinspires.ftc.teamcode.commands;
 
-import com.bylazar.configurables.annotations.Configurable;
-import com.pedropathing.geometry.BezierCurve;
-import com.pedropathing.geometry.BezierLine;
-import com.pedropathing.geometry.BezierPoint;
-import com.pedropathing.geometry.Pose;
+import com.pedropathing.api.Paths;
+import com.pedropathing.math.Pose;
 import com.pedropathing.paths.Path;
-import com.pedropathing.paths.PathBuilder;
 
-import org.firstinspires.ftc.teamcode.subsystems.drive.Constants;
+import org.firstinspires.ftc.teamcode.pedro.Constants;
 import org.firstinspires.ftc.teamcode.subsystems.drive.Drive;
 
 import java.util.ArrayList;
@@ -20,13 +16,12 @@ import java.util.function.Supplier;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 
-@Configurable
 public class DriveCommands {
 
     private DriveCommands() {}
 
-    public BooleanSupplier isStationary() {
-        return () -> (Constants.localizer.getVelocity().getX() < 2) && (Constants.localizer.getVelocity().getY() < 2) && (Constants.localizer.getVelocity().getHeading() < 0.1);
+    public BooleanSupplier isStationary(Drive drive) {
+        return drive::isStill;
     }
 
 
@@ -50,10 +45,11 @@ public class DriveCommands {
     public static Command driveToPose(Drive drive, Supplier<Pose> pose) {
         return Drive.followPath(
                 drive,
-                () -> drive.getPathBuilder()
-                        .addPath(new Path(new BezierLine(drive.getPose(), pose.get())))
-                        .setLinearHeadingInterpolation(drive.getPose().getHeading(), pose.get().getHeading())
-                        .build());
+                () -> {
+                    Pose current = drive.getPose();
+                    Pose target = pose.get();
+                    return Paths.line(current,target).linear(current,target);
+                });
     }
 
     public static Command driveToPose(Drive drive, Supplier<Pose> pose, Command command, DoubleSupplier commandActivationPoint) {
@@ -71,15 +67,13 @@ public class DriveCommands {
         return Commands.runOnce(() -> {
             Pose current = drive.getPose();
             Pose target = pose.get();
-            drive.followPath(drive.getFollower().pathBuilder().addPath(new Path(new BezierLine(current, target)))
-                    .setLinearHeadingInterpolation(current.getHeading(), target.getHeading())
-                    .build());
+            drive.followPath(Paths.line(current,target).linear(current,target));
         }, drive).andThen(
                 Commands.waitUntil(() -> {
                     Pose current = drive.getPose();
                     Pose target = pose.get();
-                    double dx = current.getX() - target.getX();
-                    double dy = current.getY() - target.getY();
+                    double dx = current.x() - target.x();
+                    double dy = current.y() - target.y();
                     return (dx * dx + dy * dy) <= radiusInches * radiusInches;
                 })
         );
@@ -90,24 +84,20 @@ public class DriveCommands {
             ArrayList<Pose> poseList = new ArrayList<>();
 
             poseList.add(drive.getPose());
-            PathBuilder builder = drive.getFollower().pathBuilder();
             for (TuneablePose cp : controlPoints) {
                 poseList.add(cp.getCorrectPose(red));
             }
 
             poseList.add(endPose.getCorrectPose(red));
-
-            builder.addPath(
-              new BezierCurve(
-                      poseList
-              )
-            );
+            Path path = Paths.curve(poseList.toArray(new Pose[0]));
 
             if (reversed) {
-                builder.setReversed();
+                path = path.reverseTangent();
+            } else {
+                path = path.tangent();
             }
 
-            drive.followPath(builder.build());
+            drive.followPath(path);
         }, drive).andThen(
                 Commands.waitUntil(drive::isFinished)
         );
@@ -115,53 +105,52 @@ public class DriveCommands {
 
     public static Command driveTangentialNear(Drive drive, boolean reversed, boolean red, double radiusInches, TuneablePose endPose, TuneablePose... controlPoints) {
         return Commands.runOnce(() -> {
-            ArrayList<Pose> poseList = new ArrayList<>();
-
+            List<Pose> poseList = new ArrayList<>();
             poseList.add(drive.getPose());
-            PathBuilder builder = drive.getFollower().pathBuilder();
+
             for (TuneablePose cp : controlPoints) {
                 poseList.add(cp.getCorrectPose(red));
             }
 
             poseList.add(endPose.getCorrectPose(red));
-
-            builder.addPath(
-                    new BezierCurve(
-                            poseList
-                    )
-            );
-
+            Path path = Paths.curve(poseList.toArray(new Pose [0]));
             if (reversed) {
-                builder.setReversed();
+                path = path.reverseTangent();
+            } else {
+                path = path.tangent();
             }
 
-            drive.followPath(builder.build());
+            drive.followPath(path);
 
         }, drive).andThen(
                 Commands.waitUntil(() -> {
                     Pose current = drive.getPose();
                     Pose target = endPose.getCorrectPose(red);
-                    double dx = current.getX() - target.getX();
-                    double dy = current.getY() - target.getY();
+                    double dx = current.x() - target.x();
+                    double dy = current.y() - target.y();
                     return (dx * dx + dy * dy) <= radiusInches * radiusInches;
                 }));
     }
 
+    @SafeVarargs
     public static Command driveLinear(Drive drive, Supplier<Pose> endPose, DoubleSupplier endHeading, Supplier<Pose>... controlPoints) {
         return Commands.runOnce(() -> {
             Pose startPose = drive.getPose();
-            PathBuilder builder = drive.getFollower().pathBuilder();
-            for (Supplier<Pose> cp : controlPoints) {
-                Pose next = cp.get();
-                builder.addPath(
-                                new BezierCurve(
-                                        endPose.get(),
-                                        next
-                                ))
-                        .setLinearHeadingInterpolation(startPose.getHeading(), endHeading.getAsDouble());
-            }
+            List<Pose> poses = new ArrayList<>();
+            poses.add(startPose);
 
-            drive.followPath(builder.build());
+            for (Supplier<Pose> cp : controlPoints) {
+                poses.add(cp.get());
+            }
+            poses.add(endPose.get());
+            Path path;
+            if (poses.size() >2) {
+                path = Paths.curve(poses.toArray(new Pose[0]));
+            } else {
+                path = Paths.line(startPose,endPose.get());
+            }
+            path = path.linear(startPose.heading(), endHeading.getAsDouble());
+            drive.followPath(path);
         }, drive).andThen(
                 Commands.waitUntil(drive::isFinished)
         );
@@ -173,18 +162,25 @@ public class DriveCommands {
     }
 
     public static Command setHeading(Drive drive, DoubleSupplier heading) {
-        return Commands.runOnce(() -> drive.setPose(new Pose(drive.getPose().getX(), drive.getPose().getY(), heading.getAsDouble())), drive);
+        return Commands.runOnce(() -> drive.setPose(new Pose(drive.getPose().x(), drive.getPose().y(), heading.getAsDouble())), drive);
     }
 
 
 
+//    public static Command turn(Drive drive, DoubleSupplier angle) {
+//        return Drive.followPath(
+//                drive,
+//                () -> drive.getPathBuilder()
+//                        .addPath(new Path(new BezierPoint(drive.getDesiredPose().getPose())))
+//                        .setConstantHeadingInterpolation(drive.getDesiredPose().getPose().getHeading() + Math.toRadians(angle.getAsDouble()))
+//                        .build()).until(drive::headingIsFinished).andThen(Commands.waitSeconds(0.1));
+//    }
     public static Command turn(Drive drive, DoubleSupplier angle) {
-        return Drive.followPath(
-                drive,
-                () -> drive.getPathBuilder()
-                        .addPath(new Path(new BezierPoint(drive.getDesiredPose().getPose())))
-                        .setConstantHeadingInterpolation(drive.getDesiredPose().getPose().getHeading() + Math.toRadians(angle.getAsDouble()))
-                        .build()).until(drive::headingIsFinished).andThen(Commands.waitSeconds(0.1));
+        return Commands.runOnce(() -> {
+            Pose current = drive.getPose();
+            double targetHeading = current.heading() + Math.toRadians(angle.getAsDouble());
+            drive.getFollower().hold(new Pose(current.x(), current.y(), targetHeading));
+        }).andThen(Commands.waitUntil(drive::isFinished));
     }
 
     public static Command setPoseStorage(Drive drive, Supplier<Pose> pose) {

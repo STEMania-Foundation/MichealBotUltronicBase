@@ -1,6 +1,5 @@
 package org.firstinspires.ftc.teamcode.opmodes;
 
-import com.acmerobotics.dashboard.FtcDashboard;
 import com.bylazar.telemetry.PanelsTelemetry;
 import com.pedropathing.telemetry.SelectScope;
 import com.pedropathing.telemetry.Selector;
@@ -58,8 +57,7 @@ public abstract class SelectableAutoOpMode extends CommandOpMode {
     public void robotInit() {
         CommandScheduler.getInstance().reset();
 
-        robotTelemetry = new KTelemetry(telemetry, PanelsTelemetry.INSTANCE.getTelemetry(),
-                FtcDashboard.getInstance().getTelemetry());
+        robotTelemetry = new KTelemetry(telemetry, PanelsTelemetry.INSTANCE.getTelemetry());
         FieldDrawing.init();
 
         robotContainer = createRobotContainer();
@@ -72,7 +70,9 @@ public abstract class SelectableAutoOpMode extends CommandOpMode {
 
         if (!started) updateSelector();
 
-        robotTelemetry.addData("Loop Time", 1.0 / (timer.get() - previousTime));
+        robotContainer.periodic();
+
+        robotTelemetry.addData("Loop Hz", 1.0 / (timer.get() - previousTime));
         previousTime = timer.get();
 
         FieldDrawing.drawDebug(robotContainer.getFollower());
