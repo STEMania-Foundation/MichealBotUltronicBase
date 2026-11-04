@@ -32,7 +32,7 @@ dependencies {
 
     // fullpanels already brings limelightproxy (and panels, configurables, telemetry, field,
     // gamepad, graph, ...) transitively - no need to declare them individually.
-    implementation 'com.bylazar:fullpanels:1.0.7'
+    implementation 'com.bylazar:fullpanels:1.0.16'
 
 }
 
