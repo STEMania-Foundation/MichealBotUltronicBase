@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.subsystems.turret;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.Servo.Direction;
 
 import org.firstinspires.ftc.teamcode.lib.util.KTelemetry;
 import org.firstinspires.ftc.teamcode.subsystems.intake.Intake;
@@ -19,6 +20,8 @@ public class Turret extends SubsystemBase{
         this.telemetry = telemetry;
         LServo=hwMap.get(Servo.class, "turretA");
         RServo=hwMap.get(Servo.class, "turretB");
+        LServo.setDirection(Direction.FORWARD);
+        RServo.setDirection(Direction.REVERSE);
 
     }
     @Override
@@ -30,6 +33,13 @@ public class Turret extends SubsystemBase{
         } catch (Exception ignored) {
 
         }
+    }
+    public void reset(){
+        LServo.setPosition(0.5);
+        RServo.setPosition(0.5);
+    }
+    public static Command reset(Turret turret){
+        return Commands.run(()->turret.reset());
     }
     public void setPos(double pos){
         LServo.setPosition(pos);
