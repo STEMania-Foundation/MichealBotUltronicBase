@@ -17,6 +17,7 @@ import org.firstinspires.ftc.teamcode.subsystems.flywheel.Flywheel;
 import org.firstinspires.ftc.teamcode.subsystems.flywheel.FlywheelConstants;
 import org.firstinspires.ftc.teamcode.subsystems.intake.Intake;
 import org.firstinspires.ftc.teamcode.subsystems.transfer.Transfer;
+import org.firstinspires.ftc.teamcode.subsystems.turret.Turret;
 
 
 import java.util.Iterator;
@@ -32,7 +33,7 @@ public class RobotContainer {
     private final KTelemetry telemetry;
     private final Drive drive;
 
-
+    private final Turret turret;
     private final Intake intake;
     private final Transfer transfer;
     private final Flywheel flywheel;
@@ -51,6 +52,7 @@ public class RobotContainer {
     private final VoltageSensor voltageSensor;
     private double cachedVoltage = 12.0;
     private double lastVoltageReadMs = Double.NEGATIVE_INFINITY;
+    private double turretPos=0.5;
 
 
 
@@ -67,7 +69,8 @@ public class RobotContainer {
         intake = new Intake(hwMap, telemetry);
         transfer = new Transfer(hwMap, telemetry);
         flywheel = new Flywheel(hwMap, telemetry);
-
+        turret=new Turret(hwMap, telemetry);
+        flywheel.setTarget(() -> 0.0);
         driverController = new CommandGamepad(gamepad1);
 
         Iterator<VoltageSensor> sensors = hwMap.voltageSensor.iterator();
@@ -122,7 +125,7 @@ public class RobotContainer {
                     DriveCommands.drive(drive,
                             () -> (driverController.getLeftY()*1),
                             () -> (driverController.getLeftX()*1),
-                            () -> (-(driverController.getRightX())*0.9),
+                            () -> (-(driverController.getRightX())*-0.9),
                             //() -> ((-(driverController.getRightX())/voltage.getAsDouble()*12.6)*0.9),
                             () -> true
                     )
@@ -141,8 +144,8 @@ public class RobotContainer {
                         ()->isRed)
         );
 
-        driverController.rightBumper().whileTrue(Commands.run(() -> intake.setPower(1.0), intake));
-        driverController.leftBumper().whileTrue(Commands.run(() -> transfer.setPower(1.0), transfer));
+        driverController.rightBumper().whileTrue(Commands.run(() -> intake.setPower(-0.75), intake));
+        driverController.leftBumper().whileTrue(Commands.run(() -> transfer.setPower(-1.0), transfer));
 
         driverController.a().onTrue(flywheel.setTarget(() -> FlywheelConstants.shootVelocity));
         driverController.b().onTrue(flywheel.setTarget(() -> 0.0));

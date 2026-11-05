@@ -27,7 +27,7 @@ public class Intake extends SubsystemBase {
         this.telemetry = telemetry;
 
         intake = new MotorEx(hwMap, "intake");
-        //transfer_BB = hwMap.get(DigitalChannel.class, "firstBB");
+                //transfer_BB = hwMap.get(DigitalChannel.class, "firstBB");
         //artifact_2_BB = hwMap.get(DigitalChannel.class, "secondBB");
     }
 

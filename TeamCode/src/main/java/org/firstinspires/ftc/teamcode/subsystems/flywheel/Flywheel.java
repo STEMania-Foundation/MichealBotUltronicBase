@@ -20,7 +20,6 @@ public class Flywheel extends SubsystemBase {
     private final MotorEx rightMotor;
 
     private final PIDController leftPID;
-    private final PIDController rightPID;
 
 
     private double leftVelocity = 0;
@@ -34,23 +33,20 @@ public class Flywheel extends SubsystemBase {
     public Flywheel(HardwareMap hwMap, KTelemetry telemetry) {
         this.telemetry = telemetry;
 
-        leftMotor = new MotorEx(hwMap, "LFLY");
+        leftMotor = new MotorEx(hwMap, "flywheelA");
         leftMotor.setInverted(false);
 
-        rightMotor = new MotorEx(hwMap, "RFLY");
+        rightMotor = new MotorEx(hwMap, "flywheelB");
         rightMotor.setInverted(true);
 
         leftPID = new PIDController(FlywheelConstants.kp, FlywheelConstants.ki, FlywheelConstants.kd);
-        rightPID = new PIDController(FlywheelConstants.kp, FlywheelConstants.ki, FlywheelConstants.kd);
 
         leftPID.setTolerance(5);
-        rightPID.setTolerance(5);
     }
 
     @Override
     public void periodic() {
         leftPID.setPID(FlywheelConstants.kp, FlywheelConstants.ki, FlywheelConstants.kd);
-        rightPID.setPID(FlywheelConstants.kp, FlywheelConstants.ki, FlywheelConstants.kd);
 
         leftMotor.getCurrentPosition();
         rightMotor.getCurrentPosition();
@@ -72,10 +68,8 @@ public class Flywheel extends SubsystemBase {
         double leftpwr = leftPID.calculate(leftVelocity,calculatedtarget);
         double ff = (FlywheelConstants.ks + FlywheelConstants.kv*calculatedtarget + FlywheelConstants.kf);
 
-        double rightpwr = rightPID.calculate(rightVelocity,calculatedtarget);
 
         leftMotor.set(leftpwr+ff);
-        rightMotor.set(rightpwr+ff);
 
     }
 
