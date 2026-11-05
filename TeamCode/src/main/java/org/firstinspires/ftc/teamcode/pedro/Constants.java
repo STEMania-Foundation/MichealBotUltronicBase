@@ -11,13 +11,14 @@ import com.pedropathing.revhub.drivetrains.MecanumConfig;
 import com.pedropathing.revhub.localizers.OctoQuadConfig;
 import com.pedropathing.revhub.localizers.OctoQuadLocalizer;
 import com.pedropathing.revhub.localizers.PinpointConfig;
+import com.pedropathing.revhub.localizers.PinpointLocalizer;
 import com.qualcomm.hardware.digitalchickenlabs.OctoQuad;
 import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
-import org.firstinspires.ftc.teamcode.pedro.localizers.DriveEncoderConfig;
+//import org.firstinspires.ftc.teamcode.pedro.localizers.DriveEncoderConfig;
 import org.firstinspires.ftc.teamcode.pedro.procedures.OctoQuadTuner;
 import org.firstinspires.ftc.teamcode.pedro.procedures.PinpointTuner;
 
@@ -25,38 +26,38 @@ public class Constants {
     // Placeholder values - run the "OctoQuad Tuner" procedure in Tuning.java and paste its
     // generated block over this one. Every var below is ConfigVar.required(); leaving one
     // unset throws the moment OctoQuadLocalizer reads it.
-    public static OctoQuadConfig localizerConfig = new OctoQuadConfig(c -> { // TODO: REPLACE WITH REAL CONFIG
-        c.name.set("octoquad");
-        c.xPodPort.set(0);
-        c.yPodPort.set(1);
-        c.ticksPerUnit.set(505.316944406);
-        c.xPodOffset.set(1.0039370078740157);
-        c.yPodOffset.set(-0.7874015748031497);
-        c.xPodDirection.set(OctoQuad.EncoderDirection.REVERSE);
-        c.yPodDirection.set(OctoQuad.EncoderDirection.FORWARD);
-        c.globalDistanceUnit.set(DistanceUnit.INCH);
-        c.offsetUnits.set(DistanceUnit.INCH);
-        c.i2cRecoveryMode.set(OctoQuad.I2cRecoveryMode.MODE_1_PERIPH_RST_ON_FRAME_ERR);
-        c.headingScalar.set(12.274758379994843);
-    });
-    
-
-//    public static PinpointConfig localizerConfig = new PinpointConfig(c -> { // TODO: REPLACE WITH REAL CONFIG
-//        c.name.set("pinpoint");
+//    public static OctoQuadConfig localizerConfig = new OctoQuadConfig(c -> { // TODO: REPLACE WITH REAL CONFIG
+//        c.name.set("octoquad");
+//        c.xPodPort.set(0);
+//        c.yPodPort.set(1);
+//        c.ticksPerUnit.set(505.316944406);
 //        c.xPodOffset.set(1.0039370078740157);
 //        c.yPodOffset.set(-0.7874015748031497);
-//        c.xPodDirection.set(GoBildaPinpointDriver.EncoderDirection.REVERSE);
-//        c.yPodDirection.set(GoBildaPinpointDriver.EncoderDirection.FORWARD);
-//        c.podType.set(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_SWINGARM_POD);
+//        c.xPodDirection.set(OctoQuad.EncoderDirection.REVERSE);
+//        c.yPodDirection.set(OctoQuad.EncoderDirection.FORWARD);
 //        c.globalDistanceUnit.set(DistanceUnit.INCH);
 //        c.offsetUnits.set(DistanceUnit.INCH);
+//        c.i2cRecoveryMode.set(OctoQuad.I2cRecoveryMode.MODE_1_PERIPH_RST_ON_FRAME_ERR);
+//        c.headingScalar.set(12.274758379994843);
 //    });
+    
+
+    public static PinpointConfig localizerConfig = new PinpointConfig(c -> { // TODO: REPLACE WITH REAL CONFIG
+        c.name.set("pinpoint");
+        c.xPodOffset.set(1.0039370078740157);
+        c.yPodOffset.set(-0.7874015748031497);
+        c.xPodDirection.set(GoBildaPinpointDriver.EncoderDirection.REVERSED);
+        c.yPodDirection.set(GoBildaPinpointDriver.EncoderDirection.FORWARD);
+        c.podType.set(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_SWINGARM_POD);
+        c.globalDistanceUnit.set(DistanceUnit.INCH);
+        c.offsetUnits.set(DistanceUnit.INCH);
+    });
 
     public static MecanumConfig drivetrainConfig = new MecanumConfig(c -> {
-        c.frontLeftName.set("FL");
-        c.frontRightName.set("FR");
-        c.backLeftName.set("BL");
-        c.backRightName.set("BR");
+        c.frontLeftName.set("frontLeft");
+        c.frontRightName.set("frontRight");
+        c.backLeftName.set("backLeft");
+        c.backRightName.set("backRight");
         c.frontLeftDirection.set(DcMotorSimple.Direction.FORWARD);
         c.frontRightDirection.set(DcMotorSimple.Direction.REVERSE);
         c.backLeftDirection.set(DcMotorSimple.Direction.REVERSE);
@@ -88,7 +89,7 @@ public class Constants {
             }
     );
     public static Follower create(HardwareMap h) {
-        return new Follower(new OctoQuadLocalizer(h,localizerConfig), new Mecanum(h,drivetrainConfig),new Foresight(foresightConfig));
+        return new Follower(new PinpointLocalizer(h,localizerConfig), new Mecanum(h,drivetrainConfig),new Foresight(foresightConfig));
 //        return null;
     }
 }
