@@ -15,5 +15,5 @@ public class FlywheelConstants {
 
     public static double target = 0.0;
 
-    public static double shootVelocity = 1600.0;
+    public static double shootVelocity = 1000;
 }

@@ -11,6 +11,8 @@ import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import com.qualcomm.robotcore.hardware.Servo;
+import org.firstinspires.ftc.teamcode.subsystems.flywheel.FlywheelConstants;
 
 public class Flywheel extends SubsystemBase {
 
@@ -21,9 +23,9 @@ public class Flywheel extends SubsystemBase {
 
     private final PIDController leftPID;
 
+    private final Servo gate;
 
     private double leftVelocity = 0;
-    private double rightVelocity = 0;
 //    private double targetVelocity = 0;
 
     private boolean run = false;
@@ -32,6 +34,7 @@ public class Flywheel extends SubsystemBase {
 
     public Flywheel(HardwareMap hwMap, KTelemetry telemetry) {
         this.telemetry = telemetry;
+        gate = hwMap.get(Servo.class, "gate");
 
         leftMotor = new MotorEx(hwMap, "flywheelA");
         leftMotor.setInverted(true);
@@ -52,14 +55,17 @@ public class Flywheel extends SubsystemBase {
         rightMotor.getCurrentPosition();
 
         leftVelocity = leftMotor.getCorrectedVelocity();
-        rightVelocity = rightMotor.getCorrectedVelocity();
         updatePowerPID(FlywheelConstants.target);
 
         telemetry.addLine("Flywheel");
         telemetry.addData("LeftVel", ((leftVelocity/28.0)*60.0)/2.6);
-        telemetry.addData("RightVel", ((rightVelocity/28.0)*60.0)/2.6);
         telemetry.addData("Flywheel Left Power", leftMotor.motor.getPower());
         telemetry.addData("Flywheel Right Power", rightMotor.motor.getPower());
+        if(leftVelocity==FlywheelConstants.shootVelocity){
+            gate.setPosition(0);
+        }else{
+            gate.setPosition(1);
+        }
     }
 
     public void updatePowerPID(double velocity) {
@@ -70,9 +76,9 @@ public class Flywheel extends SubsystemBase {
 
 
         leftMotor.set(leftpwr+ff);
+        rightMotor.set(leftpwr+ff);
 
     }
-
     public void setVelocity(double velocity) {
         FlywheelConstants.target = velocity;
     }
@@ -80,7 +86,6 @@ public class Flywheel extends SubsystemBase {
     public void run(boolean start) {
         run = start;
     }
-    
     public Command setTarget(DoubleSupplier velocity) {
         return Commands.runOnce(() -> setVelocity(velocity.getAsDouble()), this);
     }

@@ -49,6 +49,9 @@ public class Turret extends SubsystemBase{
         telemetry.addData("LServo", LServo.getPosition());
         telemetry.addData("RServo", RServo.getPosition());
     }
+    public double getPos(){
+        return LServo.getPosition();
+    }
     public static Command setPos(Turret turret, Double pos) {
         return Commands.run(() -> turret.setPos(pos));
     }

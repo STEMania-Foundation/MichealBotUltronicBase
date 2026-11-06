@@ -6,10 +6,11 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import org.firstinspires.ftc.teamcode.lib.ftclib.hardware.motors.MotorEx;
 import org.firstinspires.ftc.teamcode.lib.util.KTelemetry;
+import org.firstinspires.ftc.teamcode.subsystems.flywheel.Flywheel;
 
 import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
-import org.firstinspires.ftc.teamcode.lib.ftclib.hardware.ServoEx;
+
 
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -20,14 +21,12 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 public class Transfer extends SubsystemBase {
 
     private final KTelemetry telemetry;
-    private final Servo gate;
     private final MotorEx transfer;
 
     public Transfer(HardwareMap hwMap, KTelemetry telemetry ) {
         this.telemetry = telemetry;
 
         transfer = new MotorEx(hwMap, "transfer");
-        gate = hwMap.get(Servo.class, "gate");
 
     }
 
@@ -38,6 +37,7 @@ public class Transfer extends SubsystemBase {
         } catch (Exception ignored) {
 
         }
+
     }
 
     public void setPower(double power) {
