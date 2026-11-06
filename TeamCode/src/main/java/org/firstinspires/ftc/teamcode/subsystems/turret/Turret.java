@@ -4,14 +4,12 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.Servo.Direction;
 
 import org.firstinspires.ftc.teamcode.lib.util.KTelemetry;
-import org.firstinspires.ftc.teamcode.subsystems.intake.Intake;
-
-import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.function.BooleanSupplier;
+import org.firstinspires.ftc.teamcode.subsystems.turret.TurretConstants;
 import java.util.function.DoubleSupplier;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+
 public class Turret extends SubsystemBase{
     private final KTelemetry telemetry;
     private final  Servo LServo;
@@ -35,15 +33,19 @@ public class Turret extends SubsystemBase{
         }
     }
     public void reset(){
-        LServo.setPosition(0.5);
-        RServo.setPosition(0.5);
+        TurretConstants.aPos=0.5;
+        TurretConstants.bPos=0.5;
+        LServo.setPosition(TurretConstants.aPos);
+        RServo.setPosition(TurretConstants.bPos);
     }
     public static Command reset(Turret turret){
         return Commands.run(()->turret.reset());
     }
     public void setPos(double pos){
-        LServo.setPosition(pos);
-        RServo.setPosition(1-pos);
+        TurretConstants.aPos=pos;
+        TurretConstants.bPos=1-pos;
+        LServo.setPosition(TurretConstants.aPos);
+        RServo.setPosition(TurretConstants.bPos);
         telemetry.addData("LServo", LServo.getPosition());
         telemetry.addData("RServo", RServo.getPosition());
     }

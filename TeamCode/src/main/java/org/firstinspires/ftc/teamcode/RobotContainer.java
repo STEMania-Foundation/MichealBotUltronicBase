@@ -147,8 +147,11 @@ public class RobotContainer {
         driverController.rightBumper().whileTrue(Commands.run(() -> intake.setPower(-0.75), intake));
         driverController.leftBumper().whileTrue(Commands.run(() -> transfer.setPower(-1.0), transfer));
 
-        driverController.a().onTrue(flywheel.setTarget(() -> FlywheelConstants.shootVelocity));
-        driverController.b().onTrue(flywheel.setTarget(() -> 0.0));
+        driverController.b().whileTrue(flywheel.setTarget(() -> FlywheelConstants.shootVelocity));
+
+
+        driverController.b().whileFalse(flywheel.setTarget(()->0));
+
     }
 
     public Command getAutoCommand(OpModeConstants auto) {

@@ -34,10 +34,10 @@ public class Flywheel extends SubsystemBase {
         this.telemetry = telemetry;
 
         leftMotor = new MotorEx(hwMap, "flywheelA");
-        leftMotor.setInverted(false);
+        leftMotor.setInverted(true);
 
         rightMotor = new MotorEx(hwMap, "flywheelB");
-        rightMotor.setInverted(true);
+        rightMotor.setInverted(false);
 
         leftPID = new PIDController(FlywheelConstants.kp, FlywheelConstants.ki, FlywheelConstants.kd);
 
