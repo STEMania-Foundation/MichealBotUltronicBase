@@ -37,14 +37,15 @@ public class Transfer extends SubsystemBase {
     public void periodic() {
         try {
             telemetry.addLine("Transfer");
+            telemetry.addData("transfer speed", transferRunning());
         } catch (Exception ignored) {
 
         }
-        if(transfer.getVelocity()>0){
-                gate.setPosition(0);
+        if(transferRunning().getAsBoolean()){
+                gate.setPosition(0.5);
 
         }else{
-            gate.setPosition(1);
+            gate.setPosition(0.1);
         }
 
     }
@@ -55,7 +56,7 @@ public class Transfer extends SubsystemBase {
 
     public static Command setPower(Transfer transfer, DoubleSupplier power) {
         return Commands.run(() -> transfer.setPower(power.getAsDouble()), transfer);
-        
+
     }
 
     public static Command setPower(Transfer transfer, double power) {
