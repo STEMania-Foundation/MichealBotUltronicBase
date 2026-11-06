@@ -19,6 +19,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 //^frfr
 
 public class Transfer extends SubsystemBase {
+    private final Servo gate;
 
     private final KTelemetry telemetry;
     private final MotorEx transfer;
@@ -27,6 +28,8 @@ public class Transfer extends SubsystemBase {
         this.telemetry = telemetry;
 
         transfer = new MotorEx(hwMap, "transfer");
+        gate = hwMap.get(Servo.class, "gate");
+
 
     }
 
@@ -37,6 +40,12 @@ public class Transfer extends SubsystemBase {
         } catch (Exception ignored) {
 
         }
+        if(transfer.getVelocity()>0){
+                gate.setPosition(0);
+
+        }else{
+            gate.setPosition(1);
+        }
 
     }
 
@@ -46,6 +55,7 @@ public class Transfer extends SubsystemBase {
 
     public static Command setPower(Transfer transfer, DoubleSupplier power) {
         return Commands.run(() -> transfer.setPower(power.getAsDouble()), transfer);
+        
     }
 
     public static Command setPower(Transfer transfer, double power) {

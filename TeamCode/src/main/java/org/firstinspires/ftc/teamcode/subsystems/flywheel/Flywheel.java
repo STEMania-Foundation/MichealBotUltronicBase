@@ -23,7 +23,6 @@ public class Flywheel extends SubsystemBase {
 
     private final PIDController leftPID;
 
-    private final Servo gate;
 
     private double leftVelocity = 0;
 //    private double targetVelocity = 0;
@@ -34,7 +33,6 @@ public class Flywheel extends SubsystemBase {
 
     public Flywheel(HardwareMap hwMap, KTelemetry telemetry) {
         this.telemetry = telemetry;
-        gate = hwMap.get(Servo.class, "gate");
 
         leftMotor = new MotorEx(hwMap, "flywheelA");
         leftMotor.setInverted(true);
@@ -61,11 +59,7 @@ public class Flywheel extends SubsystemBase {
         telemetry.addData("LeftVel", ((leftVelocity/28.0)*60.0)/2.6);
         telemetry.addData("Flywheel Left Power", leftMotor.motor.getPower());
         telemetry.addData("Flywheel Right Power", rightMotor.motor.getPower());
-        if(leftVelocity==FlywheelConstants.shootVelocity){
-            gate.setPosition(0);
-        }else{
-            gate.setPosition(1);
-        }
+
     }
 
     public void updatePowerPID(double velocity) {

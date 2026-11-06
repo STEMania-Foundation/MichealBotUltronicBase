@@ -151,8 +151,8 @@ public class RobotContainer {
 
 
         driverController.a().onFalse(flywheel.setTarget(()->0));
-        Commands.run(()->turret.setPos(turret.getPos()+(driverController.getRightTrigger()*0.01)), turret);
-        Commands.run(()->turret.setPos(turret.getPos()-(driverController.getLeftTrigger()*0.01)), turret);
+        driverController.dpadLeft().whileTrue(Commands.run(()->turret.setPos(turret.getPos()+0.005), turret));
+        driverController.dpadRight().whileTrue(Commands.run(()->turret.setPos(turret.getPos()-0.005), turret));
 
 
     }
