@@ -144,15 +144,15 @@ public class RobotContainer {
                         ()->isRed)
         );
 
-        driverController.rightBumper().whileTrue(Commands.run(() -> intake.setPower(-0.75), intake));
+        driverController.rightBumper().whileTrue(Commands.run(() -> intake.setPower(-1), intake));
         driverController.leftBumper().whileTrue(Commands.run(() -> transfer.setPower(-1.0), transfer));
 
         driverController.b().onTrue(flywheel.setTarget(() -> FlywheelConstants.shootVelocity));
 
 
         driverController.a().onFalse(flywheel.setTarget(()->0));
-        driverController.dpadLeft().whileTrue(Commands.run(()->turret.setPos(turret.getPos()+0.01), turret));
-        driverController.dpadRight().whileTrue(Commands.run(()->turret.setPos(turret.getPos()-0.01), turret));
+        Commands.run(()->turret.setPos(turret.getPos()+(driverController.getRightTrigger()*0.01)), turret);
+        Commands.run(()->turret.setPos(turret.getPos()-(driverController.getLeftTrigger()*0.01)), turret);
 
 
     }
